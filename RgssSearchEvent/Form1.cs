@@ -23,6 +23,7 @@ namespace RgssSearchEvent
         }
 
         private void Button1_Click(object sender, EventArgs e) {
+            // TODO: select switch
         }
 
         private void RadioButton2_CheckedChanged(object sender, EventArgs e) {
@@ -32,7 +33,7 @@ namespace RgssSearchEvent
         }
 
         private void Button2_Click(object sender, EventArgs e) {
-
+            // TODO: select variable
         }
 
         private void RadioButton3_CheckedChanged(object sender, EventArgs e) {
@@ -46,6 +47,23 @@ namespace RgssSearchEvent
         }
 
         private void Button3_Click(object sender, EventArgs e) {
+            // TODO: perform search
+        }
+
+        private void Button4_Click(object sender, EventArgs e) {
+            contextMenuStrip1.SuspendLayout();
+            contextMenuStrip1.Items.Clear();
+            RefreshPossibleProjects();
+            // TODO: contextMenuStrip1.Items.Add("-");
+            contextMenuStrip1.ResumeLayout();
+            contextMenuStrip1.Show(button4, new Point(0, button4.Height));
+        }
+
+        private void Form1_Load(object sender, EventArgs e) {
+            RefreshPossibleProjects();
+        }
+
+        private void RefreshPossibleProjects() {
 
         }
     }

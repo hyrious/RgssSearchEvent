@@ -93,7 +93,7 @@ end
 
 if version == 0
   out = ['!', encode('invalid project: not found *.rvproj2')].join(' ')
-  File.open(file, 'w') { |f| f.puts out }
+  File.open(F, 'w') { |f| f.puts out }
 else
   out = []; mapids = []
   ext = [nil, 'rxdata', 'rvdata', 'rvdata2'][version]

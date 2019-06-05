@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace RgssSearchEvent
 {
@@ -40,7 +41,6 @@ namespace RgssSearchEvent
         }
 
         private void SetSwitch(int value) {
-            if (value == 0) return;
             Switch = value;
             if (Instance.Switches.TryGetValue(Switch, out string Name)) {
                 button1.Text = $"{Switch:D4}:{Name}";
@@ -65,7 +65,6 @@ namespace RgssSearchEvent
         }
 
         private void SetVariable(int value) {
-            if (value == 0) return;
             Variable = value;
             if (Instance.Variables.TryGetValue(Variable, out string Name)) {
                 button2.Text = $"{Variable:D4}:{Name}";
@@ -157,8 +156,12 @@ namespace RgssSearchEvent
             }
             if (Instance.Switches.ContainsKey(1))
                 SetSwitch(1);
+            else
+                SetSwitch(0);
             if (Instance.Variables.ContainsKey(1))
                 SetVariable(1);
+            else
+                SetVariable(0);
         }
 
         string OriginalText = String.Empty;
@@ -186,7 +189,30 @@ namespace RgssSearchEvent
                 }
             }
             if (changed) PossibleProjects.Add("-");
-            // TODO: default project folders in registry
+            changed = false;
+            changed |= GetBaseLocationsFromRegistry(@"Software\Enterbrain\RPGVXAce");
+            if (changed) PossibleProjects.Add("-");
+        }
+
+        private bool GetBaseLocationsFromRegistry(string path) {
+            try {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(path)) {
+                    if (key != null && key.GetValue("BaseLocation") is string value) {
+                        return TryAddBaseLocation(value);
+                    }
+                }
+            } catch { }
+            return false;
+        }
+
+        private bool TryAddBaseLocation(string value) {
+            bool changed = false;
+            if (Directory.Exists(value)) {
+                foreach (string dir in Directory.GetDirectories(value)) {
+                    changed |= TryAddProject(dir);
+                }
+            }
+            return changed;
         }
 
         private bool TryAddProject(string path) {

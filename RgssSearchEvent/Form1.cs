@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
@@ -82,6 +78,7 @@ namespace RgssSearchEvent
         private void Button3_Click(object sender, EventArgs e) {
             if (Instance == null) return;
             listView1.Items.Clear();
+            int limit = Clamp(Convert.ToInt32(numericUpDown1.Value), 1, 9999);
             if (button1.Enabled) {
                 foreach (RGSS.EventPage page in Instance.EventPages) {
                     if (page.Switches.Contains(Switch)) {
@@ -90,6 +87,7 @@ namespace RgssSearchEvent
                         item.SubItems.Add(Instance.GetPageDisplayText(page));
                         item.SubItems.Add(Instance.GetLocationDisplayText(page));
                         listView1.Items.Add(item);
+                        if (--limit == 0) break;
                     }
                 }
             } else if (button2.Enabled) {
@@ -100,6 +98,7 @@ namespace RgssSearchEvent
                         item.SubItems.Add(Instance.GetPageDisplayText(page));
                         item.SubItems.Add(Instance.GetLocationDisplayText(page));
                         listView1.Items.Add(item);
+                        if (--limit == 0) break;
                     }
                 }
             } else if (textBox1.Enabled) {
@@ -110,6 +109,7 @@ namespace RgssSearchEvent
                         item.SubItems.Add(Instance.GetPageDisplayText(page));
                         item.SubItems.Add(Instance.GetLocationDisplayText(page));
                         listView1.Items.Add(item);
+                        if (--limit == 0) break;
                     }
                 }
             }
@@ -138,6 +138,10 @@ namespace RgssSearchEvent
             if (result == DialogResult.OK) ChangeProject(folderBrowserDialog1.SelectedPath);
         }
 
+        private static int Clamp(int value, int min, int max) {
+            return (value < min) ? min : (value > max) ? max : value;
+        }
+
         private void ChangeProject(string path) {
             if (!RGSS.IsValidProject(path)) {
                 Instance = null;
@@ -145,23 +149,21 @@ namespace RgssSearchEvent
                 return;
             }
             Instance = new RGSS(path);
+            SuspendLayout();
             Text = $"{OriginalText} - {Path.GetFileNameWithoutExtension(Instance.ProjectPath)}";
             listView1.Items.Clear();
+            int limit = Clamp(Convert.ToInt32(numericUpDown1.Value), 1, 9999);
             foreach (RGSS.EventPage page in Instance.EventPages) {
                 ListViewItem item = new ListViewItem(Instance.GetMapDisplayText(page));
                 item.SubItems.Add(Instance.GetEventDisplayText(page));
                 item.SubItems.Add(Instance.GetPageDisplayText(page));
                 item.SubItems.Add(Instance.GetLocationDisplayText(page));
                 listView1.Items.Add(item);
+                if (--limit == 0) break;
             }
-            if (Instance.Switches.ContainsKey(1))
-                SetSwitch(1);
-            else
-                SetSwitch(0);
-            if (Instance.Variables.ContainsKey(1))
-                SetVariable(1);
-            else
-                SetVariable(0);
+            SetSwitch(Instance.Switches.ContainsKey(1) ? 1 : 0);
+            SetVariable(Instance.Variables.ContainsKey(1) ? 1 : 0);
+            ResumeLayout();
         }
 
         string OriginalText = String.Empty;
@@ -215,11 +217,21 @@ namespace RgssSearchEvent
             return changed;
         }
 
+        private Dictionary<string, bool> PossibleCache = new Dictionary<string, bool>();
+
+        private bool IsValidProject(string path) {
+            if (PossibleCache.TryGetValue(path, out bool value)) {
+                return value;
+            } else {
+                return PossibleCache[path] = RGSS.IsValidProject(path);
+            }
+        }
+
         private bool TryAddProject(string path) {
             if (path.EndsWith(@"\")) {
                 path = path.Substring(0, path.Length - 1);
             }
-            if (RGSS.IsValidProject(path) && !PossibleProjects.Contains(path)) {
+            if (!PossibleProjects.Contains(path) && IsValidProject(path)) {
                 PossibleProjects.Add(path);
                 return true;
             }
